@@ -1,9 +1,69 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>命运之骰</title>
+    <title>命运之骰 - DND 在线掷骰子工具 | D4 D6 D8 D10 D12 D20</title>
+    <meta name="description" content="命运之骰是一个 DND（龙与地下城）风格的在线掷骰子工具。支持 D4/D6/D8/D10/D12/D20 六种骰子，CSS 3D 立方体模型与旋转动画，标准 DND 大成功/大失败判定，Web Audio API 程序化音效。单文件运行，离线可用，适合 TRPG 跑团与桌游场景。" />
+    <meta name="keywords" content="命运之骰,DND,龙与地下城,掷骰子,骰子,D20,在线工具,跑团,TRPG,桌游,骰子模拟器,角色扮演,Web Audio,CSS 3D" />
+    <meta name="author" content="Nagato-YUKI" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="zh-CN" />
+    <meta name="theme-color" content="#1a0f08" />
+
+    <link rel="canonical" href="https://nagato-yuki.github.io/fate-dice/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="命运之骰" />
+    <meta property="og:title" content="命运之骰 - DND 在线掷骰子工具" />
+    <meta property="og:description" content="DND 风格的在线掷骰子工具，支持 D4-D20 六种骰子，CSS 3D 模型、标准 DND 大成功/大失败判定、Web Audio 音效。单文件运行，离线可用。" />
+    <meta property="og:url" content="https://nagato-yuki.github.io/fate-dice/" />
+    <meta property="og:locale" content="zh_CN" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="命运之骰 - DND 在线掷骰子工具" />
+    <meta name="twitter:description" content="DND 风格的在线掷骰子工具，支持 D4-D20，CSS 3D 模型与标准 DND 规则判定。" />
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='4' width='24' height='24' rx='4' fill='%231a0f08' stroke='%23c9a961' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23c9a961'/%3E%3Ccircle cx='9' cy='9' r='1.5' fill='%23e8d5a3'/%3E%3Ccircle cx='23' cy='9' r='1.5' fill='%23e8d5a3'/%3E%3Ccircle cx='9' cy='23' r='1.5' fill='%23e8d5a3'/%3E%3Ccircle cx='23' cy='23' r='1.5' fill='%23e8d5a3'/%3E%3C/svg%3E" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "命运之骰",
+      "alternateName": "Fate Dice",
+      "description": "DND（龙与地下城）风格的在线掷骰子工具，支持 D4/D6/D8/D10/D12/D20 六种骰子，CSS 3D 立方体模型与旋转动画，标准 DND 大成功/大失败判定，Web Audio API 程序化音效。单文件运行，离线可用。",
+      "url": "https://nagato-yuki.github.io/fate-dice/",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "inLanguage": "zh-CN",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "CNY"
+      },
+      "featureList": [
+        "D4/D6/D8/D10/D12/D20 六种骰子类型",
+        "CSS 3D 立方体骰子模型与旋转动画",
+        "标准 DND 规则大成功/大失败判定（仅 D20）",
+        "多骰子统计与独立高亮样式",
+        "Web Audio API 程序化音效（投掷/大成功/大失败）",
+        "DND 主题视觉设计（龙鳞、符文圆环、魔法阵）",
+        "单文件运行，支持离线使用",
+        "响应式布局，适配移动端"
+      ],
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "TRPG 玩家、DND 爱好者、桌游玩家、跑团主持人"
+      },
+      "creator": {
+        "@type": "Person",
+        "name": "Nagato-YUKI",
+        "url": "https://github.com/Nagato-YUKI"
+      }
+    }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:wght@400;500;600&family=MedievalSharp&display=swap" rel="stylesheet">
@@ -515,9 +575,29 @@
         @media (prefers-reduced-motion: reduce) {
             .candle-glow, .particle, .magic-circle { animation: none; }
         }
+
+        /* SEO/无障碍：视觉隐藏但屏幕阅读器和搜索引擎可见 */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
     </style>
 </head>
 <body>
+    <noscript>
+        <div style="padding: 20px; text-align: center; color: #e8d5a3; background: #1a0f08; font-family: serif;">
+            <h2>命运之骰 - DND 在线掷骰子工具</h2>
+            <p>本工具需要启用 JavaScript 才能运行。请启用 JavaScript 后刷新页面。</p>
+            <p>命运之骰支持 D4/D6/D8/D10/D12/D20 六种骰子，适用于龙与地下城（DND）、TRPG 跑团与桌游场景。</p>
+        </div>
+    </noscript>
     <!-- 龙鳞纹理 -->
     <div class="dragon-scales" aria-hidden="true"></div>
 
@@ -611,6 +691,7 @@
         <header class="header">
             <div class="header-titles">
                 <h1>命运之骰</h1>
+                <p class="sr-only">命运之骰是一个 DND（龙与地下城）风格的在线掷骰子工具，支持 D4、D6、D8、D10、D12、D20 六种骰子类型。使用 CSS 3D 立方体模型呈现骰子旋转动画，遵循标准 DND 规则进行大成功与大失败判定（仅 D20），并配备 Web Audio API 程序化合成的音效。适用于 TRPG 跑团、桌游、角色扮演游戏等场景，单文件运行，支持离线使用。</p>
             </div>
             <div class="header-right">
                 <button class="sound-toggle" id="soundToggle" aria-label="切换音效" title="音效开关">
