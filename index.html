@@ -833,15 +833,19 @@
                 if (!audioCtx) {
                     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
                 }
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const silent = new Audio();
-                silent.play().then(function(){ silent.pause(); }).catch(function(){});
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                    // 播放 1 采样静音缓冲区，真正激活 iOS AudioContext
+                    var buf = audioCtx.createBuffer(1, 1, 22050);
+                    var src = audioCtx.createBufferSource();
+                    src.buffer = buf;
+                    src.connect(audioCtx.destination);
+                    src.start(0);
+                }
                 audioUnlocked = true;
-                document.removeEventListener('click', unlockAudio);
-                document.removeEventListener('touchstart', unlockAudio);
             }
-            document.addEventListener('click', unlockAudio);
-            document.addEventListener('touchstart', unlockAudio);
+            document.addEventListener('click', unlockAudio, { once: true });
+            document.addEventListener('touchstart', unlockAudio, { once: true });
 
             function getAudioEl(src) {
                 const a = new Audio(src);
@@ -864,6 +868,7 @@
                 if (!soundEnabled) return;
                 try {
                     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
                     loadRollBuffer().then(function(buffer) {
                         const source = audioCtx.createBufferSource();
                         const gain = audioCtx.createGain();
@@ -888,14 +893,40 @@
             }
             function playCritSound() {
                 if (!soundEnabled) return;
-                if (!audioSuccess) audioSuccess = getAudioEl(SOUND_SUCCESS);
-                audioSuccess.currentTime = 0;
-                audioSuccess.play().catch(function(){});
+                try {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    var now = audioCtx.currentTime;
+                    // 双音调上扬：C5 → E5，营造胜利氛围
+                    var o1 = audioCtx.createOscillator();
+                    var g1 = audioCtx.createGain();
+                    o1.type = 'sine';
+                    o1.frequency.setValueAtTime(523, now);
+                    g1.gain.setValueAtTime(0.0001, now);
+                    g1.gain.exponentialRampToValueAtTime(0.28, now + 0.02);
+                    g1.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+                    o1.connect(g1);
+                    g1.connect(audioCtx.destination);
+                    o1.start(now);
+                    o1.stop(now + 0.2);
+                    var o2 = audioCtx.createOscillator();
+                    var g2 = audioCtx.createGain();
+                    o2.type = 'sine';
+                    o2.frequency.setValueAtTime(659, now + 0.10);
+                    g2.gain.setValueAtTime(0.0001, now + 0.10);
+                    g2.gain.exponentialRampToValueAtTime(0.30, now + 0.12);
+                    g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.40);
+                    o2.connect(g2);
+                    g2.connect(audioCtx.destination);
+                    o2.start(now + 0.10);
+                    o2.stop(now + 0.42);
+                } catch(e) {}
             }
             function playFailSound() {
                 if (!soundEnabled) return;
                 try {
                     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
                     const now = audioCtx.currentTime;
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
@@ -916,6 +947,7 @@
                 if (!soundEnabled) return;
                 try {
                     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
                     const osc = audioCtx.createOscillator();
                     const env = audioCtx.createGain();
                     osc.type = 'sine';
