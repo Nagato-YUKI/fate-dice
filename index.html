@@ -837,7 +837,6 @@
                 return bytes.buffer;
             }
 
-            let audioUnlocked = false;
             // 确保 AudioContext 处于可播放状态。处理 suspended 和 interrupted 两种暂停状态。
             function ensureAudioRunning() {
                 if (!audioCtx) {
