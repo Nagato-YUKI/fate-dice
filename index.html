@@ -838,34 +838,43 @@
             }
 
             let audioUnlocked = false;
+            // 确保 AudioContext 处于可播放状态。处理 suspended 和 interrupted 两种暂停状态。
+            function ensureAudioRunning() {
+                if (!audioCtx) {
+                    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return Promise.reject(e); }
+                }
+                var s = audioCtx.state;
+                if (s === 'running') return Promise.resolve();
+                if (s === 'suspended') return audioCtx.resume();
+                // iOS Safari 独有的 interrupted 状态（如来电、锁屏后恢复），必须重建 AudioContext
+                if (s === 'interrupted') {
+                    return audioCtx.close().then(function() {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        return audioCtx.resume();
+                    });
+                }
+                return Promise.resolve();
+            }
+
+            let audioUnlocked = false;
             function unlockAudio() {
                 if (audioUnlocked) return;
-                if (!audioCtx) {
-                    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
-                }
-                if (audioCtx.state === 'suspended') {
-                    // resume() 是异步的，必须等 Promise resolve 后再标记解锁
-                    audioCtx.resume().then(function() {
-                        // 播放静音缓冲区，正式激活音频系统
-                        var buf = audioCtx.createBuffer(1, 1, 22050);
-                        var src = audioCtx.createBufferSource();
-                        src.buffer = buf;
-                        src.connect(audioCtx.destination);
-                        src.start(0);
-                        audioUnlocked = true;
-                        // 解锁完成后移除监听
-                        document.removeEventListener('click', unlockAudio, true);
-                        document.removeEventListener('touchstart', unlockAudio, true);
-                    });
-                    return; // 等待 resume 完成，暂不标记
-                }
-                audioUnlocked = true;
-                document.removeEventListener('click', unlockAudio, true);
-                document.removeEventListener('touchstart', unlockAudio, true);
+                ensureAudioRunning().then(function() {
+                    // 播放静音缓冲区，正式激活音频系统
+                    var buf = audioCtx.createBuffer(1, 1, 22050);
+                    var src = audioCtx.createBufferSource();
+                    src.buffer = buf;
+                    src.connect(audioCtx.destination);
+                    src.start(0);
+                    audioUnlocked = true;
+                    // 解锁完成后移除监听
+                    document.removeEventListener('click', unlockAudio, true);
+                    document.removeEventListener('touchend', unlockAudio, true);
+                }).catch(function(){});
             }
-            // 使用捕获阶段 (true)，确保在按钮的 click 处理之前先创建/恢复 AudioContext
+            // 捕获阶段 + touchend（非 touchstart！iOS 只认 touchend/click 为有效用户激活事件）
             document.addEventListener('click', unlockAudio, true);
-            document.addEventListener('touchstart', unlockAudio, true);
+            document.addEventListener('touchend', unlockAudio, true);
 
             function getAudioEl(src) {
                 const a = new Audio(src);
@@ -888,8 +897,7 @@
             function playRollSound() {
                 if (!soundEnabled) return;
                 try {
-                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    var p = (audioCtx.state === 'suspended') ? audioCtx.resume() : Promise.resolve();
+                    var p = ensureAudioRunning();
                     p.then(function() {
                         loadRollBuffer().then(function(buffer) {
                         const source = audioCtx.createBufferSource();
@@ -917,8 +925,7 @@
             function playCritSound() {
                 if (!soundEnabled) return;
                 try {
-                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    var p = (audioCtx.state === 'suspended') ? audioCtx.resume() : Promise.resolve();
+                    var p = ensureAudioRunning();
                     p.then(function() {
                     var now = audioCtx.currentTime;
                     // 双音调上扬：C5 → E5，营造胜利氛围
@@ -950,8 +957,7 @@
             function playFailSound() {
                 if (!soundEnabled) return;
                 try {
-                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    var p = (audioCtx.state === 'suspended') ? audioCtx.resume() : Promise.resolve();
+                    var p = ensureAudioRunning();
                     p.then(function() {
                     const now = audioCtx.currentTime;
                     const osc = audioCtx.createOscillator();
@@ -973,8 +979,7 @@
             function playClickSound() {
                 if (!soundEnabled) return;
                 try {
-                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    var p = (audioCtx.state === 'suspended') ? audioCtx.resume() : Promise.resolve();
+                    var p = ensureAudioRunning();
                     p.then(function() {
                     const osc = audioCtx.createOscillator();
                     const env = audioCtx.createGain();
